@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digital Closet</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121a33; --text:#e9ecff; --muted:#aab2e6; --accent:#6aa9ff; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#0b1020,#070a14); color:var(--text); }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 56px 20px; }
+    .card { background: rgba(18,26,51,.9); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    h1 { font-size: 44px; margin: 0 0 6px; letter-spacing: -0.5px; }
+    p { margin: 10px 0; color: var(--muted); line-height: 1.55; }
+    .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); color: var(--muted); font-size: 13px; }
+    .grid { display:grid; gap: 14px; grid-template-columns: 1fr; margin-top: 16px; }
+    @media (min-width: 860px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+    pre { background:#0a0f22; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px; overflow:auto; color: var(--text); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { margin: 10px 0 0 18px; color: var(--muted); }
+    .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn { display:inline-block; padding: 10px 14px; border-radius: 12px; background: rgba(106,169,255,.12); border: 1px solid rgba(106,169,255,.35); color: var(--text); }
+    .btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,.14); color: var(--muted); }
+    footer { margin-top: 18px; color: rgba(170,178,230,.75); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <span class="pill">Rust CLI • Germany (DE) • No scraping</span>
+      <h1>Digital Closet</h1>
+      <p>
+        A command-line tool that turns your event, season, budget, clothing size, and shoe size into outfit ideas and
+        clickable shopping links (Zara, H&amp;M, Zalando, Jack &amp; Jones, and more).
+      </p>
+
+      <div class="btns">
+        <a class="btn" href="https://github.com/YOUR-USERNAME/digital-closet">GitHub Repo</a>
+        <a class="btn secondary" href="./downloads/">Download binaries</a>
+      </div>
+
+      <div class="grid">
+        <div>
+          <h2 style="margin:18px 0 6px;">Example</h2>
+          <pre><code>digital-closet recommend wedding winter men --size m --shoe-size 42 --accessories --budget-max 200</code></pre>
+
+          <h2 style="margin:18px 0 6px;">Features</h2>
+          <ul>
+            <li>Fast CLI input (event/season/gender/sizes/budget).</li>
+            <li>Generates store search links for Germany + EU.</li>
+            <li>Works offline for recommendations; links open in your browser.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 style="margin:18px 0 6px;">How it works</h2>
+          <p>
+            Digital Closet builds a keyword query from your inputs, then generates official store search URLs where
+            possible and safe “site:” search links for other brands.
+          </p>
+
+          <h2 style="margin:18px 0 6px;">Pricing idea</h2>
+          <p>
+            Free for personal use. Future “Pro” could add saved profiles, more brands, and smarter matching.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        Tip: Put this file at <code>docs/index.html</code> so GitHub Pages can publish it easily.
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
