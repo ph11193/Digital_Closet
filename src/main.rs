@@ -39,7 +39,7 @@ struct RecommendArgs {
 
     /// Shoe size (EU), allowed: 40..=45
     #[arg(long, value_parser = clap::value_parser!(u8).range(40..=45))]
-    shoe_size: u8, // range validation via clap [web:205]
+    shoe_size: u8,
 
     /// Include accessories in the suggestion (adds keywords)
     #[arg(long, default_value_t = false)]
@@ -84,7 +84,7 @@ enum ClothingSize {
 }
 
 fn main() {
-    let cli = Cli::parse(); // clap derive parse entrypoint [web:93]
+    let cli = Cli::parse();
 
     match cli.command {
         Commands::Recommend(args) => run_recommend(args),
@@ -113,35 +113,27 @@ fn run_recommend(args: RecommendArgs) {
 
     let q = url_encode(&keywords);
 
-    // Germany / Europe oriented links:
-    // Use direct on-site search where simple & stable; otherwise use Google "site:" links (robust, no scraping).
+    // Direct company links only (no Google).
+    // Some brands support query-filled search URLs; others open a reliable landing/search area.
     let links: Vec<(&str, String)> = vec![
-        // Direct store search links
-        ("Zara", format!("https://www.zara.com/search?searchTerm={q}")),
+        // Query-filled search links
         ("H&M (DE)", format!("https://www2.hm.com/de_de/search-results.html?q={q}")),
-        // Google site-search links (DE)
-        ("Zalando (DE)", google_site_search("zalando.de", &keywords)),
-        ("Jack & Jones (DE/EU)", google_site_search("jackjones.com", &keywords)),
-        ("ABOUT YOU (DE)", google_site_search("aboutyou.de", &keywords)),
-        ("Peek & Cloppenburg (DE)", google_site_search("peek-cloppenburg.de", &keywords)),
-        ("Mango (DE)", google_site_search("shop.mango.com/de", &keywords)),
-        ("Massimo Dutti (DE)", google_site_search("massimodutti.com/de", &keywords)),
-        ("Bershka (DE)", google_site_search("bershka.com/de", &keywords)),
-        ("Pull&Bear (DE)", google_site_search("pullandbear.com/de", &keywords)),
-        ("Stradivarius (DE)", google_site_search("stradivarius.com/de", &keywords)),
+        ("Zara (DE)", format!("https://www.zara.com/de/en/search?searchTerm={q}")),
+        ("Adidas (DE)", format!("https://www.adidas.de/search?q={q}")),
+        ("Nike (DE)", format!("https://www.nike.com/de/w/search?q={q}")),
+        ("Mango (DE)", format!("https://shop.mango.com/de/search?query={q}")),
+        ("Massimo Dutti (DE)", format!("https://www.massimodutti.com/de/search?q={q}")),
+
+        // Official company pages (reliable open, may not pre-fill query)
+        ("Zalando (DE)", "https://www.zalando.de/".to_string()),
+        ("Jack & Jones (DE)", "https://www.jackjones.com/de-de".to_string()),
+        ("Loro Piana", "https://www.loropiana.com".to_string()),
     ];
 
     println!("Links:");
     for (brand, url) in links {
         println!("- {brand}: {url}");
     }
-}
-
-fn google_site_search(domain: &str, keywords: &str) -> String {
-    // Google uses q= for the query string [web:163]
-    let query = format!("site:{domain} {keywords}");
-    let q = url_encode(&query);
-    format!("https://www.google.com/search?q={q}")
 }
 
 fn build_outfit_and_keywords(args: &RecommendArgs) -> (String, String) {
@@ -187,7 +179,6 @@ fn build_outfit_and_keywords(args: &RecommendArgs) -> (String, String) {
 
     let shoe_kw = format!("shoes eu {}", args.shoe_size);
 
-    // Keep it readable for store searches
     let keywords = format!(
         "{gender_kw} {base_kw} {season_kw} {size_kw} {shoe_kw} {accessory_kw} budget {}",
         args.budget_max
@@ -199,7 +190,6 @@ fn build_outfit_and_keywords(args: &RecommendArgs) -> (String, String) {
     (idea, keywords)
 }
 
-// Minimal URL encoding so links work for spaces and a few common characters.
 fn url_encode(s: &str) -> String {
     s.chars()
         .map(|c| match c {
