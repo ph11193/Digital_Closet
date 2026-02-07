@@ -144,7 +144,7 @@ Links:
 - Loro Piana
 ```
 ---
-## 🎯 Supported Values
+## 🎯 Supported Values:
 
 Events:
 
