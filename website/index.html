@@ -1,76 +1,685 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Digital Closet is a Rust CLI that generates outfit ideas and shopping links for Germany based on event, season, sizes and budget." />
   <title>Digital Closet</title>
+
+  <!-- Icons + font -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
   <style>
-    :root { --bg:#0b1020; --card:#121a33; --text:#e9ecff; --muted:#aab2e6; --accent:#6aa9ff; }
-    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#0b1020,#070a14); color:var(--text); }
-    .wrap { max-width: 920px; margin: 0 auto; padding: 56px 20px; }
-    .card { background: rgba(18,26,51,.9); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-    h1 { font-size: 44px; margin: 0 0 6px; letter-spacing: -0.5px; }
-    p { margin: 10px 0; color: var(--muted); line-height: 1.55; }
-    .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); color: var(--muted); font-size: 13px; }
-    .grid { display:grid; gap: 14px; grid-template-columns: 1fr; margin-top: 16px; }
-    @media (min-width: 860px) { .grid { grid-template-columns: 1.2fr .8fr; } }
-    pre { background:#0a0f22; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px; overflow:auto; color: var(--text); }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    ul { margin: 10px 0 0 18px; color: var(--muted); }
-    .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top: 14px; }
-    .btn { display:inline-block; padding: 10px 14px; border-radius: 12px; background: rgba(106,169,255,.12); border: 1px solid rgba(106,169,255,.35); color: var(--text); }
-    .btn.secondary { background: transparent; border: 1px solid rgba(255,255,255,.14); color: var(--muted); }
-    footer { margin-top: 18px; color: rgba(170,178,230,.75); font-size: 13px; }
+    :root {
+      --beige-light: #F8F4E9;
+      --beige-medium: #EDE8DC;
+      --beige-dark: #E1D9C8;
+      --sand: #D4C9B8;
+      --clay: #B8A89A;
+      --sage: #9CB59D;
+      --stone: #A8B2B8;
+      --moss: #7A9567;
+      --terracotta: #C67C54;
+      --earth: #8B7355;
+      --chocolate: #5D4C3D;
+
+      --glass: rgba(255, 255, 255, 0.42);
+      --glass-2: rgba(255, 255, 255, 0.28);
+      --glass-border: rgba(255, 255, 255, 0.68);
+
+      --shadow-sm: 0 8px 26px rgba(92, 76, 61, 0.08);
+      --shadow-md: 0 18px 60px rgba(92, 76, 61, 0.12);
+
+      --text: rgba(93, 76, 61, 0.95);
+      --muted: rgba(93, 76, 61, 0.74);
+
+      --radius-lg: 26px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+
+      background: radial-gradient(circle at 12% 14%, rgba(156, 181, 157, 0.13) 0%, transparent 34%),
+                  radial-gradient(circle at 88% 18%, rgba(198, 124, 84, 0.10) 0%, transparent 40%),
+                  radial-gradient(circle at 70% 85%, rgba(168, 178, 184, 0.10) 0%, transparent 45%),
+                  linear-gradient(135deg, var(--beige-light) 0%, var(--beige-medium) 50%, var(--beige-dark) 100%);
+    }
+
+    a { color: var(--moss); text-decoration: none; }
+    a:hover { color: var(--terracotta); text-decoration: underline; }
+    a:focus-visible, button:focus-visible {
+      outline: 3px solid rgba(156, 181, 157, 0.75);
+      outline-offset: 3px;
+      border-radius: 14px;
+    }
+
+    .floating-shape {
+      position: fixed;
+      border-radius: 50%;
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(0px);
+      opacity: 1;
+    }
+    .shape-1 {
+      width: 220px; height: 220px;
+      top: 10%; left: 5%;
+      background: radial-gradient(circle, rgba(198, 124, 84, 0.10), transparent 70%);
+    }
+    .shape-2 {
+      width: 170px; height: 170px;
+      bottom: 14%; right: 8%;
+      background: radial-gradient(circle, rgba(156, 181, 157, 0.10), transparent 70%);
+    }
+    .shape-3 {
+      width: 130px; height: 130px;
+      top: 52%; left: 86%;
+      background: radial-gradient(circle, rgba(139, 115, 85, 0.08), transparent 70%);
+    }
+
+    .container {
+      width: min(1120px, calc(100% - 3rem));
+      margin: 0 auto;
+      padding: 2.2rem 0 2.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .logo { display: flex; align-items: center; gap: 1rem; }
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--terracotta), var(--moss));
+      border-radius: var(--radius-md);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px); /* needs transparency to show blur [web:687] */
+    }
+    .logo-icon i { font-size: 1.45rem; color: var(--beige-light); }
+
+    .logo-text h1 {
+      margin: 0;
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      color: transparent;
+      background: linear-gradient(to right, var(--chocolate), var(--earth));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .logo-text p { margin: 0.15rem 0 0; font-size: 0.95rem; color: var(--muted); }
+
+    .version {
+      background: var(--glass);
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 650;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      color: var(--moss);
+      box-shadow: var(--shadow-sm);
+      white-space: nowrap;
+    }
+
+    /* Main layout */
+    .main-content {
+      display: grid;
+      grid-template-columns: 1.35fr 0.65fr; /* bigger “side tab” */
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--glass);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(15px); /* glass effect [web:687] */
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.35);
+      overflow: hidden;
+    }
+    .panel-inner { padding: 2.2rem; }
+
+    /* Hero */
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .hero-badge {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--sage), var(--stone));
+      box-shadow: 0 10px 26px rgba(92,76,61,0.10);
+    }
+    .hero-badge i { font-size: 1.55rem; color: var(--beige-light); }
+
+    .hero h2 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: var(--chocolate);
+      line-height: 1.1;
+    }
+    .lead {
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.6;
+      max-width: 70ch;
+    }
+
+    .pillRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.25rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.45);
+      color: rgba(93, 76, 61, 0.78);
+      font-size: 0.92rem;
+      box-shadow: 0 10px 25px rgba(92,76,61,0.05);
+    }
+    .pill i { color: var(--moss); }
+
+    .features {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .feature {
+      background: rgba(255,255,255,0.54);
+      border-radius: var(--radius-md);
+      padding: 1.15rem;
+      border: 1px solid rgba(255,255,255,0.70);
+      transition: transform .18s ease, background .18s ease;
+    }
+    .feature:hover { transform: translateY(-2px); background: rgba(255,255,255,0.68); }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      margin-bottom: 0.8rem;
+      color: var(--beige-light);
+      box-shadow: 0 10px 24px rgba(92,76,61,0.08);
+    }
+    .feature:nth-child(1) .feature-icon { background: linear-gradient(135deg, var(--terracotta), #D89B73); }
+    .feature:nth-child(2) .feature-icon { background: linear-gradient(135deg, var(--moss), #8CAF7D); }
+    .feature:nth-child(3) .feature-icon { background: linear-gradient(135deg, var(--stone), #BAC4CA); }
+
+    .feature h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1.05rem;
+      color: var(--earth);
+      letter-spacing: -0.2px;
+    }
+    .feature p { margin: 0; color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+
+    /* Sidebar */
+    .sideTitle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.4rem 1.6rem;
+      border-bottom: 1px solid rgba(139,115,85,0.14);
+      background: linear-gradient(180deg, rgba(255,255,255,0.40), rgba(255,255,255,0.18));
+    }
+    .sideTitle h3 { margin: 0; font-size: 1.05rem; color: var(--chocolate); }
+    .sideTitle span { font-size: 0.92rem; color: var(--moss); font-weight: 700; }
+
+    .sidebarBody { padding: 1.6rem; }
+    .sidebarBody p { margin: 0 0 0.9rem; color: var(--muted); }
+
+    .command-example {
+      background: rgba(237, 232, 220, 0.75);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      overflow-x: auto;
+      box-shadow: 0 14px 40px rgba(92,76,61,0.08);
+    }
+    .command-example code { color: var(--chocolate); font-size: 0.98rem; white-space: nowrap; }
+    .prompt { color: var(--moss); font-weight: 800; }
+    .command { color: var(--terracotta); font-weight: 800; }
+    .args { color: var(--earth); }
+
+    .buttons-container {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0.95rem 1.15rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.98rem;
+      text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      border: 1px solid rgba(255,255,255,0.70);
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(92,76,61,0.10);
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--moss), var(--sage));
+      color: var(--beige-light);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(122, 149, 103, 0.25);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.38);
+      color: var(--chocolate);
+      backdrop-filter: blur(10px);
+    }
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.62);
+      color: var(--chocolate);
+    }
+
+    /* How it works */
+    .how-it-works { margin-top: 1.5rem; }
+    .how-it-works h3 {
+      margin: 0;
+      padding: 1.6rem 1.8rem 0.8rem;
+      color: var(--earth);
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .how-it-works h3 i { color: var(--terracotta); }
+
+    .steps {
+      padding: 0 1.8rem 1.8rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .step {
+      background: rgba(255,255,255,0.54);
+      border-radius: var(--radius-md);
+      padding: 1.1rem;
+      border: 1px solid rgba(255,255,255,0.70);
+      text-align: left;
+    }
+
+    .step-number {
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--earth), var(--terracotta));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--beige-light);
+      margin-bottom: 0.75rem;
+    }
+
+    .step h4 {
+      margin: 0 0 0.4rem;
+      font-size: 1.05rem;
+      color: var(--chocolate);
+      letter-spacing: -0.2px;
+    }
+
+    .step p { margin: 0; color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+
+    /* Footer */
+    .footer {
+      margin-top: 1.6rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      padding-top: 1.6rem;
+      border-top: 1px solid rgba(139, 115, 85, 0.18);
+    }
+
+    /* Modal */
+    .modalOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(237,232,220,0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(6px);
+    }
+
+    .modal{
+      background: rgba(248,244,233,0.94);
+      border-radius: 24px;
+      padding: 26px;
+      max-width: 680px;
+      width: 100%;
+      border: 1px solid rgba(139,115,85,0.18);
+      box-shadow: 0 24px 70px rgba(92,76,61,0.16);
+    }
+
+    .modalHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .modalHeader h3{
+      color: var(--moss);
+      font-size: 1.35rem;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .iconBtn{
+      background: rgba(255,255,255,0.60);
+      border: 1px solid rgba(139,115,85,0.14);
+      color: var(--clay);
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      cursor: pointer;
+      display:grid;
+      place-items:center;
+      transition: transform .15s ease, background .15s ease, color .15s ease;
+    }
+
+    .iconBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.78);
+      color: var(--chocolate);
+    }
+
+    .modalBlock{
+      background: rgba(237,232,220,0.70);
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid rgba(139,115,85,0.10);
+      margin-top: 12px;
+    }
+
+    .modalBlock h4{
+      color: var(--chocolate);
+      margin: 0 0 10px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .modalCode{
+      display:block;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.80);
+      border-radius: 10px;
+      color: var(--chocolate);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.98rem;
+      border: 1px solid rgba(139,115,85,0.10);
+      overflow-x: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px) {
+      .main-content { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .container { width: min(900px, calc(100% - 2rem)); }
+      .header { align-items: flex-start; }
+      .version { align-self: flex-start; }
+    }
+
+    @media (max-width: 560px) {
+      .container { width: calc(100% - 1.5rem); padding: 1.4rem 0 2rem; }
+      .panel-inner { padding: 1.4rem; }
+      .sideTitle { padding: 1.2rem 1.3rem; }
+      .sidebarBody { padding: 1.3rem; }
+      .hero h2 { font-size: 1.65rem; }
+      .logo-text h1 { font-size: 1.45rem; }
+    }
+
+    /* Reduce motion for accessibility [web:616] */
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; }
+      .feature, .btn { transition: none !important; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card">
-      <span class="pill">Rust CLI • Germany (DE) • No scraping</span>
-      <h1>Digital Closet</h1>
-      <p>
-        A command-line tool that turns your event, season, budget, clothing size, and shoe size into outfit ideas and
-        clickable shopping links (Zara, H&amp;M, Zalando, Jack &amp; Jones, and more).
-      </p>
+  <div class="floating-shape shape-1" aria-hidden="true"></div>
+  <div class="floating-shape shape-2" aria-hidden="true"></div>
+  <div class="floating-shape shape-3" aria-hidden="true"></div>
 
-      <div class="btns">
-        <a class="btn" href="https://github.com/YOUR-USERNAME/digital-closet">GitHub Repo</a>
-        <a class="btn secondary" href="./downloads/">Download binaries</a>
-      </div>
-
-      <div class="grid">
-        <div>
-          <h2 style="margin:18px 0 6px;">Example</h2>
-          <pre><code>digital-closet recommend wedding winter men --size m --shoe-size 42 --accessories --budget-max 200</code></pre>
-
-          <h2 style="margin:18px 0 6px;">Features</h2>
-          <ul>
-            <li>Fast CLI input (event/season/gender/sizes/budget).</li>
-            <li>Generates store search links for Germany + EU.</li>
-            <li>Works offline for recommendations; links open in your browser.</li>
-          </ul>
+  <div class="container">
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon" aria-hidden="true">
+          <i class="fas fa-tshirt"></i>
         </div>
-
-        <div>
-          <h2 style="margin:18px 0 6px;">How it works</h2>
-          <p>
-            Digital Closet builds a keyword query from your inputs, then generates official store search URLs where
-            possible and safe “site:” search links for other brands.
-          </p>
-
-          <h2 style="margin:18px 0 6px;">Pricing idea</h2>
-          <p>
-            Free for personal use. Future “Pro” could add saved profiles, more brands, and smarter matching.
-          </p>
+        <div class="logo-text">
+          <h1>Digital Closet</h1>
+          <p>Rust CLI for outfit ideas + Germany-focused shopping links</p>
         </div>
       </div>
+      <div class="version">v1.0.0</div>
+    </header>
 
-      <footer>
-        Tip: Put this file at <code>docs/index.html</code> so GitHub Pages can publish it easily.
-      </footer>
-    </div>
+    <main class="main-content">
+      <!-- Left: main panel -->
+      <section class="panel hero" id="glass-os">
+        <div class="panel-inner">
+          <div class="hero-top">
+            <div class="hero-title">
+              <div class="hero-badge" aria-hidden="true"><i class="fas fa-desktop"></i></div>
+              <div>
+                <h2>Your outfit plan, in one command.</h2>
+                <p class="lead">
+                  Digital Closet turns your event, season, sizes, and budget into an outfit idea plus clickable store searches
+                  (Zalando, H&amp;M, Zara, Jack &amp; Jones, and more).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pillRow" aria-label="Highlights">
+            <span class="pill"><i class="fas fa-wifi"></i> Works offline for suggestions</span>
+            <span class="pill"><i class="fas fa-arrow-up-right-from-square"></i> Links open in your browser</span>
+            <span class="pill"><i class="fas fa-shield-heart"></i> No product-page scraping</span>
+          </div>
+
+          <div class="features" aria-label="Key features">
+            <div class="feature">
+              <div class="feature-icon" aria-hidden="true"><i class="fas fa-magic"></i></div>
+              <h3>Smart recommendations</h3>
+              <p>One clean outfit idea from your inputs, designed for fast decision-making.</p>
+            </div>
+
+            <div class="feature">
+              <div class="feature-icon" aria-hidden="true"><i class="fas fa-shopping-bag"></i></div>
+              <h3>German retailers</h3>
+              <p>Generates store search links tailored for Germany-focused brands.</p>
+            </div>
+
+            <div class="feature">
+              <div class="feature-icon" aria-hidden="true"><i class="fas fa-terminal"></i></div>
+              <h3>CLI-first</h3>
+              <p>Simple commands, predictable output, and a workflow that fits developers.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: bigger side tab -->
+      <aside class="panel">
+        <div class="sideTitle">
+          <h3>Quick start</h3>
+          <span>CLI</span>
+        </div>
+        <div class="sidebarBody">
+          <p>Run from the cloned repository:</p>
+          <div class="command-example" aria-label="Example command">
+            <code>
+              <span class="prompt">$</span>
+              <span class="command">cargo run --</span>
+              <span class="args">recommend wedding winter men --size M --shoe-size 42 --accessories --budget-max 200</span>
+            </code>
+          </div>
+
+          <div class="buttons-container">
+            <a href="https://github.com/ph11193/Digital_Closet" target="_blank" rel="noreferrer" class="btn btn-secondary">
+              <i class="fab fa-github"></i>
+              View on GitHub
+            </a>
+            <a href="#" id="quick-start-btn" class="btn btn-primary">
+              <i class="fas fa-rocket"></i>
+              Quick Start Guide
+            </a>
+          </div>
+
+          <p style="margin-top: 1rem;">
+            Tip: try <code>digital-closet recommend --help</code> for all options.
+          </p>
+        </div>
+      </aside>
+    </main>
+
+    <section class="panel how-it-works">
+      <h3><i class="fas fa-play-circle"></i> How it works</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h4>Install / build</h4>
+          <p>Use Cargo (or your provided binary) to run the tool locally.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h4>Enter preferences</h4>
+          <p>Set size, shoes, season, and budget to tailor the recommendation.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h4>Open links</h4>
+          <p>Get an outfit idea and safe store searches you can click immediately.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Built with Rust • Digital Closet • Germany-focused shopping links</p>
+      <p><a href="https://github.com/ph11193/Digital_Closet/issues" target="_blank" rel="noreferrer">Report an issue</a></p>
+    </footer>
   </div>
+
+  <script>
+    const quickStartBtn = document.getElementById('quick-start-btn');
+
+    quickStartBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      const modal = `
+        <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Quick Start Guide">
+          <div class="modal">
+            <div class="modalHeader">
+              <h3><i class="fas fa-terminal"></i> Quick Start Guide</h3>
+              <button class="iconBtn" id="closeModal" aria-label="Close">×</button>
+            </div>
+
+            <div class="modalBlock">
+              <h4><i class="fas fa-download"></i> Installation</h4>
+              <code class="modalCode">$ cargo install digital-closet</code>
+              <p style="color: var(--earth); margin-top: 10px; font-size: 0.92rem;">
+                <i class="fas fa-info-circle"></i> Ensure Rust + Cargo are installed.
+              </p>
+            </div>
+
+            <div class="modalBlock">
+              <h4><i class="fas fa-code"></i> Try it</h4>
+              <code class="modalCode">$ digital-closet recommend --help</code>
+              <code class="modalCode" style="margin-top:10px;">$ digital-closet recommend wedding summer men --size M --shoe-size 42</code>
+            </div>
+
+            <div class="modalBlock" style="background: rgba(156,181,157,0.12); border-left: 4px solid var(--moss);">
+              <p style="color: var(--chocolate); margin: 0; font-size: 0.92rem;">
+                <i class="fas fa-lightbulb"></i> <strong>Pro tip:</strong> add
+                <code style="background: rgba(255,255,255,0.55); padding:2px 6px; border-radius:6px;">--accessories</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modal);
+
+      const overlay = document.getElementById('modalOverlay');
+      const closeBtn = document.getElementById('closeModal');
+
+      const close = () => overlay && overlay.remove();
+
+      closeBtn.addEventListener('click', close);
+      overlay.addEventListener('click', (evt) => { if (evt.target === overlay) close(); });
+      document.addEventListener('keydown', (evt) => { if (evt.key === 'Escape') close(); }, { once: true });
+    });
+  </script>
 </body>
 </html>
