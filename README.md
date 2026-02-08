@@ -39,7 +39,7 @@ Currently supported regions:
 
 4. **Region Switching**
    - Region only affects **retailers**, not outfit logic
-   - Germany and Italy use different official brand ecosystems
+   - Germany uses different official brand ecosystems
 
 ---
 
